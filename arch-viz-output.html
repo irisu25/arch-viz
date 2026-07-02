@@ -153,6 +153,17 @@
          network.focus(matchNodeId, { scale: 1.2, animation: true });
       }
     });
+
+    // Live Reload Client
+    if (window.location.protocol.startsWith('http')) {
+      var source = new EventSource('/stream');
+      source.onmessage = function(e) {
+        if (e.data === 'reload') {
+          console.log('Change detected, reloading graph...');
+          location.reload();
+        }
+      };
+    }
   </script>
 </body>
 </html>

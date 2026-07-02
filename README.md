@@ -11,6 +11,7 @@ Arch-Viz is a lightweight CLI tool that instantly maps out your codebase. It sta
 - **Focus Mode**: Click on any file to instantly highlight its direct dependencies and dim the rest of the noise.
 - **Dead Code Detection**: Automatically spots orphaned files that are never imported anywhere.
 - **Custom Ignore**: Use `--ignore=folder1,folder2` to skip heavy or irrelevant directories.
+- **Live Reload**: Run with `--watch` to automatically rebuild the graph in your browser as you type code.
 - **Sleek UI**: Premium GitHub Dark Dimmed theme with Glassmorphism overlay and native SVG icons for `.ts`, `.tsx`, `.js`, and `.jsx` files.
 - **Fast**: Recursively scans directories while intelligently ignoring heavy folders like `node_modules` and `.git` by default.
 
@@ -27,6 +28,9 @@ npx @irisu25/arch-viz ./src
 
 # Exclude specific folders like tests or components
 npx @irisu25/arch-viz ./src --ignore=tests,components
+
+# Watch mode: auto-rebuilds graph on file changes (Live Reload)
+npx @irisu25/arch-viz ./src --watch
 ```
 
 ### Manual Installation

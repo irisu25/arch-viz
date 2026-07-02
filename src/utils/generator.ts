@@ -68,7 +68,6 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
       const targetNode = nodes.find(n => n.filePath.includes(targetFileName));
       
       if (targetNode) {
-        // Local dependency
         const toId = fileToId.get(targetNode.filePath);
         visEdges.push({
           from: fromId,
@@ -80,7 +79,6 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
           smooth: { type: 'cubicBezier', roundness: 0.5 }
         });
       } else {
-        // External dependency (NPM package)
         if (!imp.startsWith('.') && !imp.startsWith('/') && !imp.startsWith('@/')) {
           let extId = externalPackages.get(imp);
           if (!extId) {
@@ -225,7 +223,6 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
     
     var network = new vis.Network(container, data, options);
 
-    // Focus Mode (Click)
     network.on("selectNode", function (params) {
       if (params.nodes.length == 1) {
         var selectedNodeId = params.nodes[0];
@@ -247,7 +244,6 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
       }));
     });
 
-    // Search functionality
     document.getElementById('search-input').addEventListener('input', function(e) {
       var term = e.target.value.toLowerCase().trim();
       
@@ -271,6 +267,16 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
          network.focus(matchNodeId, { scale: 1.2, animation: true });
       }
     });
+
+    if (window.location.protocol.startsWith('http')) {
+      var source = new EventSource('/stream');
+      source.onmessage = function(e) {
+        if (e.data === 'reload') {
+          console.log('Change detected, reloading graph...');
+          location.reload();
+        }
+      };
+    }
   </script>
 </body>
 </html>
