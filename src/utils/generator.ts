@@ -28,12 +28,18 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
   const visNodes = nodes.map(node => {
     fileToId.set(node.filePath, currentId);
     
+    // Scale SVG slightly based on file size (cap at 80x80)
+    const baseSize = 60;
+    const scaledSize = Math.min(baseSize + (node.sizeKb * 0.5), 90);
+    const ext = path.extname(node.filePath);
+    
     return {
       id: currentId++,
       label: path.basename(node.filePath),
-      title: node.filePath,
+      title: `Path: ${node.filePath}<br>Size: ${node.sizeKb} KB`,
       shape: 'image',
-      image: getSvgIcon(path.extname(node.filePath)),
+      size: scaledSize / 2, // vis.js uses radius for size
+      image: getSvgIcon(ext),
       font: { 
         color: '#C9D1D9', 
         face: 'Inter, sans-serif',

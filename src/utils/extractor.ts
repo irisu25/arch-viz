@@ -3,6 +3,7 @@ import * as fs from 'fs';
 export interface DependencyNode {
   filePath: string;
   imports: string[];
+  sizeKb: number;
 }
 
 export function extractDependencies(filePaths: string[]): DependencyNode[] {
@@ -11,6 +12,9 @@ export function extractDependencies(filePaths: string[]): DependencyNode[] {
 
   return filePaths.map(filePath => {
     try {
+      const stat = fs.statSync(filePath);
+      const sizeKb = Math.round((stat.size / 1024) * 100) / 100;
+      
       const content = fs.readFileSync(filePath, 'utf-8');
       const imports: string[] = [];
       let match;
@@ -23,9 +27,9 @@ export function extractDependencies(filePaths: string[]): DependencyNode[] {
         if (match[1]) imports.push(match[1]);
       }
 
-      return { filePath, imports };
+      return { filePath, imports, sizeKb };
     } catch {
-      return { filePath, imports: [] };
+      return { filePath, imports: [], sizeKb: 0 };
     }
   });
 }

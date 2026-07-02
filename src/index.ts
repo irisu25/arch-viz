@@ -19,6 +19,26 @@ try {
   }
 
   const dependencies = extractDependencies(files);
+  
+  // Deteksi Circular Dependencies
+  let circularCount = 0;
+  dependencies.forEach(d => {
+    d.imports.forEach(imp => {
+      const target = dependencies.find(t => t.filePath.includes(path.basename(imp)));
+      if (target) {
+        const myName = path.basename(d.filePath);
+        if (target.imports.some(timp => timp.includes(myName))) {
+          console.warn(`\x1b[33m[Warning]\x1b[0m Circular dependency detected: ${myName} <-> ${path.basename(target.filePath)}`);
+          circularCount++;
+        }
+      }
+    });
+  });
+  
+  if (circularCount > 0) {
+    console.log(`Found ${circularCount / 2} circular dependencies (bidirectional).`);
+  }
+
   const outputPath = path.join(process.cwd(), 'arch-viz-output.html');
   
   generateHTML(dependencies, outputPath);
