@@ -9,8 +9,10 @@ Arch-Viz is a lightweight CLI tool that instantly maps out your codebase. It sta
 - **Zero Configuration**: Works out of the box. No webpack plugins, no Babel configs required.
 - **Interactive Graph**: Pan, zoom, and drag nodes. Powered by Vis.js.
 - **Focus Mode**: Click on any file to instantly highlight its direct dependencies and dim the rest of the noise.
+- **Dead Code Detection**: Automatically spots orphaned files that are never imported anywhere.
+- **Custom Ignore**: Use `--ignore=folder1,folder2` to skip heavy or irrelevant directories.
 - **Sleek UI**: Premium GitHub Dark Dimmed theme with Glassmorphism overlay and native SVG icons for `.ts`, `.tsx`, `.js`, and `.jsx` files.
-- **Fast**: Recursively scans directories while intelligently ignoring heavy folders like `node_modules` and `.git`.
+- **Fast**: Recursively scans directories while intelligently ignoring heavy folders like `node_modules` and `.git` by default.
 
 ## Quick Start
 
@@ -20,8 +22,11 @@ You don't even need to install it globally! You can run it directly using `npx` 
 # Run in your current directory
 npx @irisu25/arch-viz
 
-# Or target a specific folder
+# Target a specific folder
 npx @irisu25/arch-viz ./src
+
+# Exclude specific folders like tests or components
+npx @irisu25/arch-viz ./src --ignore=tests,components
 ```
 
 ### Manual Installation

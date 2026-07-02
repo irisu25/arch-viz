@@ -6,12 +6,25 @@ import { findTargetFiles } from './utils/scanner';
 import { extractDependencies } from './utils/extractor';
 import { generateHTML } from './utils/generator';
 
-const targetDir = process.argv[2] || '.';
+let targetDir = '.';
+let customIgnores: string[] = [];
+
+for (const arg of process.argv.slice(2)) {
+  if (arg.startsWith('--ignore=')) {
+    customIgnores = arg.substring(9).split(',').map(s => s.trim());
+  } else if (!arg.startsWith('-')) {
+    targetDir = arg;
+  }
+}
+
 const absoluteTargetDir = path.resolve(process.cwd(), targetDir);
 
 try {
   console.log(`Scanning: ${absoluteTargetDir}`);
-  const files = findTargetFiles(absoluteTargetDir);
+  if (customIgnores.length > 0) {
+    console.log(`Ignoring folders: ${customIgnores.join(', ')}`);
+  }
+  const files = findTargetFiles(absoluteTargetDir, customIgnores);
   
   if (files.length === 0) {
     console.log('No supported code files found.');
