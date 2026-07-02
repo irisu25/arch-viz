@@ -1,19 +1,30 @@
 {
   "name": "arch-viz",
   "version": "1.0.0",
+  "description": "Zero-config, interactive architecture visualization for JavaScript and TypeScript projects",
   "main": "dist/index.js",
   "bin": {
     "arch-viz": "./dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "ts-node src/index.ts",
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "architecture",
+    "visualization",
+    "cli",
+    "dependencies",
+    "ast",
+    "graph",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^26.1.0",
     "ts-node": "^10.9.2",
