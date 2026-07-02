@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 import * as path from 'path';
+import { exec } from 'child_process';
 import { findTargetFiles } from './utils/scanner';
 import { extractDependencies } from './utils/extractor';
+import { generateHTML } from './utils/generator';
 
 console.log("Welcome to arch-viz!");
 
-// Ambil path dari argumen terminal
 const targetDir = process.argv[2] || '.';
 const absoluteTargetDir = path.resolve(process.cwd(), targetDir);
 
@@ -21,16 +22,16 @@ try {
   console.log(`Extracting dependencies...`);
   const dependencies = extractDependencies(files);
   
-  // Menampilkan contoh hasil ekstraksi (max 3 file pertama yang punya import)
-  const filesWithImports = dependencies.filter(d => d.imports.length > 0);
-  console.log(`\nContoh Relasi Import yang Ditemukan:`);
+  // 3. Generate HTML
+  const outputFileName = 'arch-viz-output.html';
+  const outputPath = path.join(process.cwd(), outputFileName);
+  console.log(`Generating visualization...`);
+  generateHTML(dependencies, outputPath);
   
-  filesWithImports.slice(0, 3).forEach(node => {
-    // Ambil nama file saja dari path panjang biar rapi
-    const fileName = path.basename(node.filePath);
-    console.log(`\n📄 ${fileName} depends on:`);
-    node.imports.forEach(imp => console.log(`   -> ${imp}`));
-  });
+  console.log(`✅ Success! Opening ${outputFileName} in your browser...`);
+  
+  // Buka otomatis di browser (berlaku untuk Windows)
+  exec(`start "" "${outputPath}"`);
 
 } catch (error: any) {
   console.error("Error:", error.message);
