@@ -2,7 +2,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { DependencyNode } from './extractor';
 
-const getSvgIcon = (ext: string) => {
+const getSvgIcon = (ext: string, isNpm: boolean = false) => {
+  if (isNpm) {
+    const color = '#cb3837';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">
+      <rect width="60" height="60" rx="12" fill="#1C2128" stroke="${color}" stroke-width="2"/>
+      <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="14" fill="${color}">NPM</text>
+    </svg>`;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+
   let color = '#3178C6';
   let label = 'TS';
 
@@ -81,9 +90,15 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
               id: extId,
               label: imp,
               title: `External NPM Package: ${imp}`,
-              shape: 'box',
-              color: { background: '#cb3837', border: '#cb3837', highlight: '#FFD700' },
-              font: { color: '#FFFFFF', face: 'Inter, sans-serif', size: 14, vadjust: 0 }
+              shape: 'image',
+              size: 30,
+              image: getSvgIcon('', true),
+              font: { 
+                color: '#C9D1D9', 
+                face: 'Inter, sans-serif',
+                size: 14,
+                vadjust: 5
+              }
             });
           }
           visEdges.push({
