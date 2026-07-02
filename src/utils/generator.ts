@@ -25,10 +25,9 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
   const fileToId = new Map<string, number>();
   let currentId = 1;
 
-  const visNodes = nodes.map(node => {
+  const visNodes: any[] = nodes.map(node => {
     fileToId.set(node.filePath, currentId);
     
-    // Scale SVG slightly based on file size (cap at 80x80)
     const baseSize = 60;
     const scaledSize = Math.min(baseSize + (node.sizeKb * 0.5), 90);
     const ext = path.extname(node.filePath);
@@ -38,7 +37,7 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
       label: path.basename(node.filePath),
       title: `Path: ${node.filePath}<br>Size: ${node.sizeKb} KB`,
       shape: 'image',
-      size: scaledSize / 2, // vis.js uses radius for size
+      size: scaledSize / 2,
       image: getSvgIcon(ext),
       font: { 
         color: '#C9D1D9', 
@@ -50,6 +49,7 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
   });
 
   const visEdges: any[] = [];
+  const externalPackages = new Map<string, number>();
   
   nodes.forEach(node => {
     const fromId = fileToId.get(node.filePath);
@@ -59,18 +59,44 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
       const targetNode = nodes.find(n => n.filePath.includes(targetFileName));
       
       if (targetNode) {
+        // Local dependency
         const toId = fileToId.get(targetNode.filePath);
         visEdges.push({
           from: fromId,
           to: toId,
           title: `import '${imp}'`,
-          arrows: {
-            to: { enabled: true, scaleFactor: 0.6, type: 'arrow' }
-          },
+          arrows: { to: { enabled: true, scaleFactor: 0.6, type: 'arrow' } },
           color: { color: '#444C56', highlight: '#FFD700', hover: '#FFD700' },
           width: 2,
           smooth: { type: 'cubicBezier', roundness: 0.5 }
         });
+      } else {
+        // External dependency (NPM package)
+        if (!imp.startsWith('.') && !imp.startsWith('/') && !imp.startsWith('@/')) {
+          let extId = externalPackages.get(imp);
+          if (!extId) {
+            extId = currentId++;
+            externalPackages.set(imp, extId);
+            visNodes.push({
+              id: extId,
+              label: imp,
+              title: `External NPM Package: ${imp}`,
+              shape: 'box',
+              color: { background: '#cb3837', border: '#cb3837', highlight: '#FFD700' },
+              font: { color: '#FFFFFF', face: 'Inter, sans-serif', size: 14, vadjust: 0 }
+            });
+          }
+          visEdges.push({
+            from: fromId,
+            to: extId,
+            title: `import '${imp}'`,
+            arrows: { to: { enabled: true, scaleFactor: 0.4, type: 'arrow' } },
+            color: { color: 'rgba(203, 56, 55, 0.4)', highlight: '#FFD700' },
+            width: 1,
+            dashes: true,
+            smooth: { type: 'cubicBezier', roundness: 0.5 }
+          });
+        }
       }
     });
   });
@@ -109,6 +135,29 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
     #title h2 { margin: 0 0 8px 0; font-size: 20px; font-weight: 600; color: #FFFFFF; }
     #title p { margin: 0; font-size: 13px; color: #8B949E; line-height: 1.5; }
     .icon-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+
+    #search-container {
+      position: absolute;
+      top: 24px; right: 24px;
+      z-index: 10;
+    }
+    #search-input {
+      padding: 12px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(22, 27, 34, 0.7);
+      backdrop-filter: blur(12px);
+      color: white;
+      width: 250px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    #search-input:focus {
+      border-color: #58A6FF;
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -119,9 +168,13 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
       </svg>
       <h2>Architecture Map</h2>
     </div>
-    <p><b>Click a node</b> to highlight connections. <br><br>Edges indicate module imports.</p>
+    <p><b>Click a node</b> to highlight connections.<br><br><b>Red boxes</b> are external NPM packages.</p>
   </div>
   
+  <div id="search-container">
+    <input type="text" id="search-input" placeholder="Search file or package..." autocomplete="off">
+  </div>
+
   <div id="mynetwork"></div>
 
   <script type="text/javascript">
@@ -157,6 +210,7 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
     
     var network = new vis.Network(container, data, options);
 
+    // Focus Mode (Click)
     network.on("selectNode", function (params) {
       if (params.nodes.length == 1) {
         var selectedNodeId = params.nodes[0];
@@ -176,6 +230,31 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
       nodes.update(rawNodes.map(function(n) {
         return { id: n.id, opacity: 1 };
       }));
+    });
+
+    // Search functionality
+    document.getElementById('search-input').addEventListener('input', function(e) {
+      var term = e.target.value.toLowerCase().trim();
+      
+      if (!term) {
+        nodes.update(rawNodes.map(function(n) { return { id: n.id, opacity: 1 }; }));
+        return;
+      }
+      
+      var matchNodeId = null;
+      var updateNodes = rawNodes.map(function(n) {
+        if (n.label.toLowerCase().includes(term)) {
+           if (!matchNodeId) matchNodeId = n.id;
+           return { id: n.id, opacity: 1 };
+        }
+        return { id: n.id, opacity: 0.15 };
+      });
+      
+      nodes.update(updateNodes);
+      
+      if (matchNodeId) {
+         network.focus(matchNodeId, { scale: 1.2, animation: true });
+      }
     });
   </script>
 </body>
