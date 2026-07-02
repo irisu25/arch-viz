@@ -39,6 +39,34 @@ try {
     console.log(`Found ${circularCount / 2} circular dependencies (bidirectional).`);
   }
 
+  const ENTRY_POINTS = new Set([
+    'index.ts', 'index.js', 'index.jsx', 'index.tsx', 
+    'app.jsx', 'app.tsx', 'main.ts', 'main.js', 'main.jsx', 'main.tsx'
+  ]);
+
+  const orphanFiles = dependencies.filter(d => {
+    const fileName = path.basename(d.filePath);
+    const fileNameWithoutExt = path.parse(d.filePath).name;
+    
+    if (ENTRY_POINTS.has(fileName.toLowerCase())) return false;
+
+    const isImported = dependencies.some(otherNode => 
+      otherNode.filePath !== d.filePath && 
+      otherNode.imports.some(imp => {
+        const base = path.basename(imp);
+        return base === fileNameWithoutExt || base === fileName;
+      })
+    );
+
+    return !isImported;
+  });
+
+  if (orphanFiles.length > 0) {
+    console.warn(`\n\x1b[33m[Warning]\x1b[0m Found ${orphanFiles.length} potentially orphaned files:`);
+    orphanFiles.forEach(f => console.warn(`  - ${path.basename(f.filePath)}`));
+    console.warn();
+  }
+
   const outputPath = path.join(process.cwd(), 'arch-viz-output.html');
   
   generateHTML(dependencies, outputPath);
