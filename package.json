@@ -1,5 +1,5 @@
 {
-  "name": "arch-viz",
+  "name": "@irisu25/arch-viz",
   "version": "1.0.0",
   "description": "Zero-config, interactive architecture visualization for JavaScript and TypeScript projects",
   "main": "dist/index.js",

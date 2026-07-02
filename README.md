@@ -18,10 +18,10 @@ You don't even need to install it globally! You can run it directly using `npx` 
 
 ```bash
 # Run in your current directory
-npx arch-viz
+npx @irisu25/arch-viz
 
 # Or target a specific folder
-npx arch-viz ./src
+npx @irisu25/arch-viz ./src
 ```
 
 ### Manual Installation
