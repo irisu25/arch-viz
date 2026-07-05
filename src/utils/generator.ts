@@ -2,6 +2,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { DependencyNode } from './extractor';
 
+const stringToColor = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 70%, 50%)`;
+};
+
 const getSvgIcon = (ext: string, isNpm: boolean = false) => {
   if (isNpm) {
     const color = '#cb3837';
@@ -41,11 +48,17 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
     const scaledSize = Math.min(baseSize + (node.sizeKb * 0.5), 90);
     const ext = path.extname(node.filePath);
     
+    const dir = path.dirname(node.filePath);
+    const folderName = path.basename(dir);
+    const fColor = folderName ? stringToColor(folderName) : '#444C56';
+    
     return {
       id: currentId++,
       label: path.basename(node.filePath),
       title: `Path: ${node.filePath}<br>Size: ${node.sizeKb} KB<br><br><i>Double-click to open in VSCode</i>`,
       fullPath: node.filePath,
+      folderName: folderName,
+      folderColor: fColor,
       shape: 'image',
       size: scaledSize / 2,
       image: getSvgIcon(ext),
@@ -133,29 +146,72 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
     }
     #mynetwork { width: 100vw; height: 100vh; }
     
-    #title { 
-      position: absolute; 
-      top: 24px; left: 24px; 
-      z-index: 10; 
-      background: rgba(22, 27, 34, 0.7); 
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      padding: 20px 24px; 
-      border-radius: 16px; 
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      max-width: 320px;
-    }
-    #title h2 { margin: 0 0 8px 0; font-size: 20px; font-weight: 600; color: #FFFFFF; }
-    #title p { margin: 0; font-size: 13px; color: #8B949E; line-height: 1.5; }
-    .icon-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-
     #controls-container {
       position: absolute;
       top: 24px; right: 24px;
       z-index: 10;
       display: flex;
       gap: 12px;
+    }
+    #filter-container {
+      position: absolute;
+      top: 24px; left: 24px;
+      z-index: 10;
+      background: rgba(22, 27, 34, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      max-height: 60vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #filter-container h3 { margin: 0 0 10px 0; font-size: 14px; color: #FFFFFF; font-weight: 600; }
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #C9D1D9;
+      transition: color 0.2s;
+    }
+    .filter-item:hover { color: #FFFFFF; }
+    .filter-checkbox {
+      accent-color: #58A6FF;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .folder-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      display: inline-block;
+    }
+    #info-panel {
+      position: absolute;
+      bottom: 24px; left: 24px;
+      z-index: 10;
+      background: rgba(22, 27, 34, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      max-width: 250px;
+      color: #8B949E;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    #info-panel b { color: #C9D1D9; }
+    #info-panel .title {
+      display: flex; align-items: center; gap: 8px;
+      color: #FFFFFF; font-weight: 600; font-size: 13px;
+      margin-bottom: 8px;
     }
     #export-btn {
       padding: 12px 20px;
@@ -195,22 +251,26 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
   </style>
 </head>
 <body>
-  <div id="title">
-    <div class="icon-header">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path>
-      </svg>
-      <h2>Architecture Map</h2>
-    </div>
-    <p><b>Click a node</b> to highlight connections.<br><br><b>Red boxes</b> are external NPM packages.</p>
-  </div>
-  
   <div id="controls-container">
     <button id="export-btn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
       Export
     </button>
     <input type="text" id="search-input" placeholder="Search file or package..." autocomplete="off">
+  </div>
+
+  <div id="filter-container">
+    <h3>Filter Folders</h3>
+  </div>
+
+  <div id="info-panel">
+    <div class="title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58A6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      Quick Guide
+    </div>
+    • <b>Click</b> a file to highlight dependencies.<br>
+    • <b>Double-click</b> to open in VSCode.<br>
+    • <b>Scroll/Drag</b> to navigate the map.
   </div>
 
   <div id="mynetwork"></div>
@@ -241,12 +301,74 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
       },
       physics: {
         hierarchicalRepulsion: {
-          nodeDistance: 150
+          nodeDistance: 150,
+          springConstant: 0.01,
+          damping: 0.9
+        },
+        stabilization: {
+          iterations: 100
         }
       }
     };
     
     var network = new vis.Network(container, data, options);
+
+    // --- Interactive Filtering Logic ---
+    var filterState = {};
+    var filterContainer = document.getElementById('filter-container');
+    
+    var folders = new Map();
+    rawNodes.forEach(function(n) {
+      var name = n.folderName || 'External NPM';
+      var color = n.folderColor || '#cb3837';
+      if (!folders.has(name)) {
+        folders.set(name, color);
+        filterState[name] = true;
+      }
+    });
+
+    // Urutkan nama folder agar External NPM selalu di bawah
+    var sortedFolders = Array.from(folders.keys()).sort(function(a, b) {
+      if (a === 'External NPM') return 1;
+      if (b === 'External NPM') return -1;
+      return a.localeCompare(b);
+    });
+
+    sortedFolders.forEach(function(name) {
+      var color = folders.get(name);
+      var lbl = document.createElement('label');
+      lbl.className = 'filter-item';
+      
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'filter-checkbox';
+      cb.checked = true;
+      cb.onchange = function(e) {
+        filterState[name] = e.target.checked;
+        applyFilters();
+      };
+      
+      var dot = document.createElement('span');
+      dot.className = 'folder-dot';
+      dot.style.backgroundColor = color;
+      
+      var text = document.createTextNode(name);
+      
+      lbl.appendChild(cb);
+      lbl.appendChild(dot);
+      lbl.appendChild(text);
+      filterContainer.appendChild(lbl);
+    });
+
+    function applyFilters() {
+      var updateNodes = rawNodes.map(function(n) {
+        var name = n.folderName || 'External NPM';
+        var isVisible = filterState[name];
+        return { id: n.id, hidden: !isVisible };
+      });
+      nodes.update(updateNodes);
+    }
+    // ------------------------------------
 
     network.on("selectNode", function (params) {
       if (params.nodes.length == 1) {
