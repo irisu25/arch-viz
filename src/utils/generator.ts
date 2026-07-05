@@ -41,6 +41,15 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
   const fileToId = new Map<string, number>();
   let currentId = 1;
 
+  // Auto-detect editor from CLI arg or terminal environment
+  const cliEditor = process.argv.find(a => a.startsWith('--editor='))?.split('=')[1];
+  const envEditor = (cliEditor || process.env.TERM_PROGRAM || process.env.EDITOR || 'vscode').toLowerCase();
+  let editorScheme = 'vscode://file/';
+  if (envEditor.includes('cursor')) editorScheme = 'cursor://file/';
+  else if (envEditor.includes('webstorm')) editorScheme = 'webstorm://open?file=';
+  else if (envEditor.includes('idea')) editorScheme = 'idea://open?file=';
+  else if (envEditor.includes('subl')) editorScheme = 'subl://open?url=file://';
+
   const visNodes: any[] = nodes.map(node => {
     fileToId.set(node.filePath, currentId);
     
@@ -269,7 +278,7 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
       Quick Guide
     </div>
     • <b>Click</b> a file to highlight dependencies.<br>
-    • <b>Double-click</b> to open in VSCode.<br>
+    • <b>Double-click</b> to open in Editor.<br>
     • <b>Scroll/Drag</b> to navigate the map.
   </div>
 
@@ -420,8 +429,9 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
         var clickedNodeId = params.nodes[0];
         var nodeData = nodes.get(clickedNodeId);
         if (nodeData && nodeData.fullPath) {
-          var vscodeUrl = 'vscode://file/' + nodeData.fullPath.replace(/\\\\/g, '/');
-          window.open(vscodeUrl, '_self');
+          var scheme = '${editorScheme}';
+          var filePath = nodeData.fullPath.replace(/\\\\/g, '/');
+          window.open(scheme + filePath, '_self');
         }
       }
     });

@@ -10,7 +10,7 @@ Arch-Viz is a lightweight CLI tool that instantly maps out your codebase. It sta
 - **Interactive Graph**: Pan, zoom, and drag nodes. Powered by Vis.js with a smart physics engine.
 - **Interactive Filtering**: Domain-based filtering! Use the sidebar checkboxes to show/hide specific folders or hide External NPM Packages to declutter your view.
 - **Focus Mode**: Click on any file to instantly highlight its direct dependencies and dim the rest of the noise.
-- **VSCode Integration**: Double-click any node in the browser to instantly open that exact file in your VSCode editor!
+- **IDE Integration**: Double-click any node in the browser to instantly open that exact file in your preferred editor (VSCode, Cursor, WebStorm, etc.)!
 - **External NPM Detection**: Maps out your 3rd-party dependencies (React, Lodash, etc.) and isolates them dynamically.
 - **Dead Code Detection**: Automatically spots orphaned files that are never imported anywhere.
 - **Custom Ignore**: Use `--ignore=folder1,folder2` to skip heavy or irrelevant directories.
@@ -30,6 +30,9 @@ npx @irisu25/arch-viz ./src
 
 # Exclude specific folders like tests or components
 npx @irisu25/arch-viz ./src --ignore=tests,components
+
+# Specify an IDE manually if running from a non-IDE terminal (e.g., cursor, webstorm, idea, subl)
+npx @irisu25/arch-viz ./src --editor=cursor
 
 # Watch mode: auto-rebuilds graph on file changes (Live Reload)
 npx @irisu25/arch-viz ./src --watch
