@@ -7,13 +7,15 @@ Arch-Viz is a lightweight CLI tool that instantly maps out your codebase. It sta
 ## Features
 
 - **Zero Configuration**: Works out of the box. No webpack plugins, no Babel configs required.
-- **Interactive Graph**: Pan, zoom, and drag nodes. Powered by Vis.js.
+- **Interactive Graph**: Pan, zoom, and drag nodes. Powered by Vis.js with a smart physics engine.
+- **Interactive Filtering**: Domain-based filtering! Use the sidebar checkboxes to show/hide specific folders or hide External NPM Packages to declutter your view.
 - **Focus Mode**: Click on any file to instantly highlight its direct dependencies and dim the rest of the noise.
+- **VSCode Integration**: Double-click any node in the browser to instantly open that exact file in your VSCode editor!
+- **External NPM Detection**: Maps out your 3rd-party dependencies (React, Lodash, etc.) and isolates them dynamically.
 - **Dead Code Detection**: Automatically spots orphaned files that are never imported anywhere.
 - **Custom Ignore**: Use `--ignore=folder1,folder2` to skip heavy or irrelevant directories.
 - **Live Reload**: Run with `--watch` to automatically rebuild the graph in your browser as you type code.
-- **Sleek UI**: Premium GitHub Dark Dimmed theme with Glassmorphism overlay and native SVG icons for `.ts`, `.tsx`, `.js`, and `.jsx` files.
-- **Fast**: Recursively scans directories while intelligently ignoring heavy folders like `node_modules` and `.git` by default.
+- **Sleek UI**: Premium GitHub Dark Dimmed theme with Glassmorphism overlay, intuitive Info Panels, and native SVG icons.
 
 ## Quick Start
 
