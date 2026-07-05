@@ -44,7 +44,8 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
     return {
       id: currentId++,
       label: path.basename(node.filePath),
-      title: `Path: ${node.filePath}<br>Size: ${node.sizeKb} KB`,
+      title: `Path: ${node.filePath}<br>Size: ${node.sizeKb} KB<br><br><i>Double-click to open in VSCode</i>`,
+      fullPath: node.filePath,
       shape: 'image',
       size: scaledSize / 2,
       image: getSvgIcon(ext),
@@ -149,10 +150,30 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
     #title p { margin: 0; font-size: 13px; color: #8B949E; line-height: 1.5; }
     .icon-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 
-    #search-container {
+    #controls-container {
       position: absolute;
       top: 24px; right: 24px;
       z-index: 10;
+      display: flex;
+      gap: 12px;
+    }
+    #export-btn {
+      padding: 12px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(22, 27, 34, 0.7);
+      backdrop-filter: blur(12px);
+      color: white;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+    #export-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
     }
     #search-input {
       padding: 12px 20px;
@@ -184,7 +205,11 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
     <p><b>Click a node</b> to highlight connections.<br><br><b>Red boxes</b> are external NPM packages.</p>
   </div>
   
-  <div id="search-container">
+  <div id="controls-container">
+    <button id="export-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      Export
+    </button>
     <input type="text" id="search-input" placeholder="Search file or package..." autocomplete="off">
   </div>
 
@@ -266,6 +291,37 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
       if (matchNodeId) {
          network.focus(matchNodeId, { scale: 1.2, animation: true });
       }
+    });
+
+    network.on("doubleClick", function (params) {
+      if (params.nodes.length == 1) {
+        var clickedNodeId = params.nodes[0];
+        var nodeData = nodes.get(clickedNodeId);
+        if (nodeData && nodeData.fullPath) {
+          var vscodeUrl = 'vscode://file/' + nodeData.fullPath.replace(/\\\\/g, '/');
+          window.open(vscodeUrl, '_self');
+        }
+      }
+    });
+
+    document.getElementById('export-btn').addEventListener('click', function() {
+      var canvas = container.querySelector('canvas');
+      if (!canvas) return;
+
+      var tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      var ctx = tempCanvas.getContext('2d');
+      if (!ctx) return;
+
+      ctx.fillStyle = '#0D1117';
+      ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+      ctx.drawImage(canvas, 0, 0);
+
+      var link = document.createElement('a');
+      link.download = 'architecture-map.png';
+      link.href = tempCanvas.toDataURL('image/png');
+      link.click();
     });
 
     if (window.location.protocol.startsWith('http')) {
