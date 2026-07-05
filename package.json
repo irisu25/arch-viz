@@ -1,7 +1,7 @@
 {
   "name": "@irisu25/arch-viz",
-  "version": "1.0.1",
-  "description": "Zero-config, interactive architecture visualization for JavaScript and TypeScript projects",
+  "version": "1.1.0",
+  "description": "Interactive Dependency Architecture Map Visualizer",
   "main": "dist/index.js",
   "bin": {
     "arch-viz": "./dist/index.js"

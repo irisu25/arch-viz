@@ -38,7 +38,7 @@ npx @irisu25/arch-viz ./src --watch
 If you prefer to clone and run it locally:
 
 ```bash
-git clone https://github.com/yourusername/arch-viz.git
+git clone https://github.com/irisu25/arch-viz.git
 cd arch-viz
 npm install
 npm run build
