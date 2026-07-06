@@ -38,6 +38,43 @@ const getSvgIcon = (ext: string, isNpm: boolean = false) => {
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 };
 
+interface VisFont {
+  color: string;
+  face: string;
+  size: number;
+  vadjust: number;
+}
+
+interface VisNode {
+  id: number;
+  label: string;
+  title: string;
+  fullPath?: string;
+  folderName?: string;
+  folderColor?: string;
+  shape: string;
+  size: number;
+  image: string;
+  font: VisFont;
+}
+
+interface VisArrow {
+  enabled: boolean;
+  scaleFactor: number;
+  type: string;
+}
+
+interface VisEdge {
+  from: number | undefined;
+  to: number | undefined;
+  title: string;
+  arrows: { to: VisArrow };
+  color: { color: string; highlight: string; hover?: string };
+  width: number;
+  dashes?: boolean;
+  smooth: { type: string; roundness: number };
+}
+
 export function generateHTML(nodes: DependencyNode[], outputPath: string) {
   const fileToId = new Map<string, number>();
   let currentId = 1;
@@ -51,7 +88,7 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
   else if (envEditor.includes('idea')) editorScheme = 'idea://open?file=';
   else if (envEditor.includes('subl')) editorScheme = 'subl://open?url=file://';
 
-  const visNodes: any[] = nodes.map(node => {
+  const visNodes: VisNode[] = nodes.map(node => {
     fileToId.set(node.filePath, currentId);
     
     const baseSize = 60;
@@ -81,7 +118,7 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
     };
   });
 
-  const visEdges: any[] = [];
+  const visEdges: VisEdge[] = [];
   const externalPackages = new Map<string, number>();
 
   // Pre-build a Set of all known file paths for O(1) lookup during resolution.
