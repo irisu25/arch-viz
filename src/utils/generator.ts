@@ -88,17 +88,23 @@ interface VisEdge {
   smooth: { type: string; roundness: number };
 }
 
+export interface GeneratorOptions {
+  /** Editor to use for double-click-to-open. Takes precedence over env variables. */
+  editor?: string;
+}
+
 export function generateHTML(
   nodes: DependencyNode[],
   outputPath: string,
-  aliases?: PathAliases | null
+  aliases?: PathAliases | null,
+  options?: GeneratorOptions
 ) {
   const fileToId = new Map<string, number>();
   let currentId = 1;
 
-  // Auto-detect editor from CLI arg or terminal environment
+  // Editor detection priority: CLI arg > config file > TERM_PROGRAM env > EDITOR env > default
   const cliEditor = process.argv.find(a => a.startsWith('--editor='))?.split('=')[1];
-  const envEditor = (cliEditor || process.env.TERM_PROGRAM || process.env.EDITOR || 'vscode').toLowerCase();
+  const envEditor = (cliEditor || options?.editor || process.env.TERM_PROGRAM || process.env.EDITOR || 'vscode').toLowerCase();
   let editorScheme = 'vscode://file/';
   if (envEditor.includes('cursor')) editorScheme = 'cursor://file/';
   else if (envEditor.includes('webstorm')) editorScheme = 'webstorm://open?file=';

@@ -3,11 +3,12 @@
 import * as path from 'path';
 import { findTargetFiles } from './utils/scanner';
 import { extractDependencies } from './utils/extractor';
-import { generateHTML } from './utils/generator';
+import { generateHTML, GeneratorOptions } from './utils/generator';
 import { detectCircularDependencies, detectOrphanFiles } from './utils/analyzer';
 import { startWatchServer } from './utils/server';
 import { openInBrowser } from './utils/open';
 import { loadAliases } from './utils/aliases';
+import { loadConfig } from './utils/config';
 
 const args = process.argv.slice(2);
 
@@ -31,6 +32,17 @@ if (args.includes('--help') || args.includes('-h')) {
     --version, -v       Show version number
     --help, -h          Show this help message
 
+  Config file (.arch-viz.json):
+    Place a config file in your project root to avoid repeating flags.
+    CLI arguments always override config file values.
+
+    Example .arch-viz.json:
+    {
+      "ignore": ["tests", "stories", "__mocks__"],
+      "editor": "cursor",
+      "watch": false
+    }
+
   Examples:
     npx @irisu25/arch-viz
     npx @irisu25/arch-viz ./src
@@ -41,14 +53,19 @@ if (args.includes('--help') || args.includes('-h')) {
 }
 
 let targetDir = '.';
-let customIgnores: string[] = [];
-let isWatchMode = false;
+// Track which options were explicitly set via CLI so we can correctly
+// decide whether the config file value should be used instead.
+let cliIgnores: string[] = [];
+let cliWatchMode = false;
+let cliEditor: string | undefined;
 
 for (const arg of args) {
   if (arg.startsWith('--ignore=')) {
-    customIgnores = arg.substring(9).split(',').map(s => s.trim());
+    cliIgnores = arg.substring(9).split(',').map(s => s.trim());
   } else if (arg === '--watch' || arg === '-w') {
-    isWatchMode = true;
+    cliWatchMode = true;
+  } else if (arg.startsWith('--editor=')) {
+    cliEditor = arg.split('=')[1];
   } else if (!arg.startsWith('-')) {
     targetDir = arg;
   }
@@ -56,9 +73,18 @@ for (const arg of args) {
 
 const absoluteTargetDir = path.resolve(process.cwd(), targetDir);
 
+// Load config from the directory where the command is run (project root).
+// CLI args always win — config is only used when the corresponding flag is absent.
+const config = loadConfig(process.cwd());
+
+const customIgnores = cliIgnores.length > 0 ? cliIgnores : (config.ignore ?? []);
+const isWatchMode   = cliWatchMode || (config.watch ?? false);
+const resolvedEditor = cliEditor ?? config.editor; // undefined = auto-detect from env
+
 // Load path aliases from tsconfig.json / jsconfig.json once at startup.
-// aliases is null when no config is found — all functions handle this gracefully.
 const aliases = loadAliases(absoluteTargetDir);
+
+const generatorOptions: GeneratorOptions = { editor: resolvedEditor };
 
 function buildGraph(): string {
   console.log(`\nScanning: ${absoluteTargetDir}`);
@@ -94,7 +120,7 @@ function buildGraph(): string {
   detectOrphanFiles(dependencies);
 
   const outputPath = path.join(process.cwd(), 'arch-viz-output.html');
-  generateHTML(dependencies, outputPath, aliases);
+  generateHTML(dependencies, outputPath, aliases, generatorOptions);
   console.log(`Successfully generated graph for ${files.length} files.`);
   
   return outputPath;
