@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 import * as path from 'path';
-import { exec } from 'child_process';
 import { findTargetFiles } from './utils/scanner';
 import { extractDependencies } from './utils/extractor';
 import { generateHTML } from './utils/generator';
 import { detectCircularDependencies, detectOrphanFiles } from './utils/analyzer';
 import { startWatchServer } from './utils/server';
+import { openInBrowser } from './utils/open';
 
 let targetDir = '.';
 let customIgnores: string[] = [];
@@ -41,7 +41,7 @@ function buildGraph(): string {
   
   const circularCount = detectCircularDependencies(dependencies);
   if (circularCount > 0) {
-    console.log(`Found ${circularCount} circular dependencies (bidirectional).`);
+    console.log(`Found ${circularCount} circular dependenc${circularCount === 1 ? 'y' : 'ies'}.`);
   }
 
   detectOrphanFiles(dependencies);
@@ -59,7 +59,7 @@ try {
   if (isWatchMode) {
     startWatchServer(outputPath, absoluteTargetDir, buildGraph);
   } else {
-    exec(`start "" "${outputPath}"`);
+    openInBrowser(outputPath);
   }
 } catch (error: any) {
   console.error("Failed to generate visualization:", error.message);

@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { DependencyNode } from './extractor';
+import { resolveImport } from './resolver';
 
 const stringToColor = (str: string) => {
   let hash = 0;
@@ -64,7 +65,7 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
     return {
       id: currentId++,
       label: path.basename(node.filePath),
-      title: `Path: ${node.filePath}<br>Size: ${node.sizeKb} KB<br><br><i>Double-click to open in VSCode</i>`,
+      title: `Path: ${node.filePath}<br>Size: ${node.sizeKb} KB<br><br><i>Double-click to open in ${envEditor}</i>`,
       fullPath: node.filePath,
       folderName: folderName,
       folderColor: fColor,
@@ -82,16 +83,22 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
 
   const visEdges: any[] = [];
   const externalPackages = new Map<string, number>();
-  
+
+  // Pre-build a Set of all known file paths for O(1) lookup during resolution.
+  // This replaces the old nodes.find(n => n.filePath.includes(basename)) pattern
+  // which was unreliable: it matched any file whose path string happened to
+  // contain the import's basename (e.g. 'scanner' matching 'scanner.ts' AND
+  // 'default-scanner.ts'), and always picked the first match regardless of context.
+  const allFileSet = new Set(nodes.map(n => n.filePath));
+
   nodes.forEach(node => {
     const fromId = fileToId.get(node.filePath);
-    
+
     node.imports.forEach(imp => {
-      const targetFileName = path.basename(imp);
-      const targetNode = nodes.find(n => n.filePath.includes(targetFileName));
-      
-      if (targetNode) {
-        const toId = fileToId.get(targetNode.filePath);
+      const resolvedPath = resolveImport(node.filePath, imp, allFileSet);
+
+      if (resolvedPath) {
+        const toId = fileToId.get(resolvedPath);
         visEdges.push({
           from: fromId,
           to: toId,
@@ -102,6 +109,8 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
           smooth: { type: 'cubicBezier', roundness: 0.5 }
         });
       } else {
+        // Not a relative path → treat as external NPM package,
+        // but skip path aliases like '@/' which can't be resolved without tsconfig.
         if (!imp.startsWith('.') && !imp.startsWith('/') && !imp.startsWith('@/')) {
           let extId = externalPackages.get(imp);
           if (!extId) {

@@ -1,6 +1,7 @@
 import * as http from 'http';
 import * as fs from 'fs';
-import { exec } from 'child_process';
+import * as path from 'path';
+import { openInBrowser } from './open';
 
 export function startWatchServer(outputPath: string, watchDir: string, onRebuild: () => void) {
   console.log(`Starting watch server...`);
@@ -29,13 +30,21 @@ export function startWatchServer(outputPath: string, watchDir: string, onRebuild
   const PORT = 3030;
   server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
-    exec(`start http://localhost:${PORT}`);
+    openInBrowser(`http://localhost:${PORT}`);
   });
 
   let debounceTimer: NodeJS.Timeout;
   fs.watch(watchDir, { recursive: true }, (eventType, filename) => {
-    if (filename && (filename.includes('node_modules') || filename.includes('.git'))) return;
-    
+    if (!filename) return;
+
+    // Filter by exact path segments to avoid false matches on filenames
+    // that happen to contain 'node_modules' or '.git' as a substring.
+    const segments = filename.split(path.sep);
+    if (segments.some(s => s === 'node_modules' || s === '.git')) return;
+
+    // Ignore changes to the output file itself to prevent infinite rebuild loops.
+    if (path.basename(filename) === 'arch-viz-output.html') return;
+
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       console.log(`Change detected in ${filename}. Rebuilding...`);
