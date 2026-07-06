@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { DependencyNode } from './extractor';
 import { resolveImport } from './resolver';
+import { PathAliases } from './aliases';
 
 const stringToColor = (str: string) => {
   let hash = 0;
@@ -87,7 +88,11 @@ interface VisEdge {
   smooth: { type: string; roundness: number };
 }
 
-export function generateHTML(nodes: DependencyNode[], outputPath: string) {
+export function generateHTML(
+  nodes: DependencyNode[],
+  outputPath: string,
+  aliases?: PathAliases | null
+) {
   const fileToId = new Map<string, number>();
   let currentId = 1;
 
@@ -140,7 +145,7 @@ export function generateHTML(nodes: DependencyNode[], outputPath: string) {
     const fromId = fileToId.get(node.filePath);
 
     node.imports.forEach(imp => {
-      const resolvedPath = resolveImport(node.filePath, imp, allFileSet);
+      const resolvedPath = resolveImport(node.filePath, imp, allFileSet, aliases);
 
       if (resolvedPath) {
         const toId = fileToId.get(resolvedPath);

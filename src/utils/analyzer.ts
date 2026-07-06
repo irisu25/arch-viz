@@ -1,8 +1,12 @@
 import * as path from 'path';
 import { DependencyNode } from './extractor';
 import { resolveImport } from './resolver';
+import { PathAliases } from './aliases';
 
-export function detectCircularDependencies(dependencies: DependencyNode[]): number {
+export function detectCircularDependencies(
+  dependencies: DependencyNode[],
+  aliases?: PathAliases | null
+): number {
   const allFiles = new Set(dependencies.map(d => d.filePath));
 
   // Build a proper adjacency graph using fully resolved file paths instead of
@@ -12,7 +16,7 @@ export function detectCircularDependencies(dependencies: DependencyNode[]): numb
   for (const node of dependencies) {
     const targets: string[] = [];
     for (const imp of node.imports) {
-      const resolved = resolveImport(node.filePath, imp, allFiles);
+      const resolved = resolveImport(node.filePath, imp, allFiles, aliases);
       if (resolved) targets.push(resolved);
     }
     graph.set(node.filePath, targets);

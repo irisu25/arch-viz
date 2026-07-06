@@ -7,6 +7,7 @@ import { generateHTML } from './utils/generator';
 import { detectCircularDependencies, detectOrphanFiles } from './utils/analyzer';
 import { startWatchServer } from './utils/server';
 import { openInBrowser } from './utils/open';
+import { loadAliases } from './utils/aliases';
 
 const args = process.argv.slice(2);
 
@@ -55,8 +56,23 @@ for (const arg of args) {
 
 const absoluteTargetDir = path.resolve(process.cwd(), targetDir);
 
+// Load path aliases from tsconfig.json / jsconfig.json once at startup.
+// aliases is null when no config is found — all functions handle this gracefully.
+const aliases = loadAliases(absoluteTargetDir);
+
 function buildGraph(): string {
   console.log(`\nScanning: ${absoluteTargetDir}`);
+
+  if (aliases) {
+    const aliasCount = Object.keys(aliases.paths).length;
+    const source = path.relative(absoluteTargetDir, aliases.baseUrl) || '.';
+    if (aliasCount > 0) {
+      console.log(`Path aliases: ${aliasCount} pattern${aliasCount === 1 ? '' : 's'} (baseUrl: ${source})`);
+    } else {
+      console.log(`Path aliases: baseUrl resolved to '${source}'`);
+    }
+  }
+
   if (customIgnores.length > 0) {
     console.log(`Ignoring folders: ${customIgnores.join(', ')}`);
   }
@@ -70,7 +86,7 @@ function buildGraph(): string {
 
   const dependencies = extractDependencies(files);
   
-  const circularCount = detectCircularDependencies(dependencies);
+  const circularCount = detectCircularDependencies(dependencies, aliases);
   if (circularCount > 0) {
     console.log(`Found ${circularCount} circular dependenc${circularCount === 1 ? 'y' : 'ies'}.`);
   }
@@ -78,7 +94,7 @@ function buildGraph(): string {
   detectOrphanFiles(dependencies);
 
   const outputPath = path.join(process.cwd(), 'arch-viz-output.html');
-  generateHTML(dependencies, outputPath);
+  generateHTML(dependencies, outputPath, aliases);
   console.log(`Successfully generated graph for ${files.length} files.`);
   
   return outputPath;
