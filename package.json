@@ -23,8 +23,22 @@
     "graph",
     "typescript"
   ],
-  "author": "Your Name",
+  "author": {
+    "name": "Adilla Rifqi",
+    "url": "https://github.com/irisu25"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/irisu25/arch-viz.git"
+  },
+  "bugs": {
+    "url": "https://github.com/irisu25/arch-viz/issues"
+  },
+  "homepage": "https://github.com/irisu25/arch-viz#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "@types/node": "^26.1.0",
     "ts-node": "^10.9.2",
