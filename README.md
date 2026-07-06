@@ -15,7 +15,10 @@ Arch-Viz is a lightweight CLI tool that instantly maps out your codebase. It sta
 - **Dead Code Detection**: Automatically spots orphaned files that are never imported anywhere.
 - **Custom Ignore**: Use `--ignore=folder1,folder2` to skip heavy or irrelevant directories.
 - **Live Reload**: Run with `--watch` to automatically rebuild the graph in your browser as you type code.
-- **Sleek UI**: Premium GitHub Dark Dimmed theme with Glassmorphism overlay, intuitive Info Panels, and native SVG icons.
+- **Sleek UI**: Premium GitHub Dark Dimmed theme with Glassmorphism overlay, circular nodes, hierarchical layout, intuitive Info Panels, and native SVG icons.
+- **Path Alias Resolution**: Automatically resolves path aliases defined in `tsconfig.json` or `jsconfig.json`.
+- **Circular Dependency Detection**: Automatically detects and warns you about circular dependencies in your codebase.
+- **Config File Support**: Define your CLI options in an `.arch-viz.json` file.
 
 ## Quick Start
 
@@ -53,6 +56,18 @@ npm link
 
 # Now you can use it anywhere!
 arch-viz ./src
+```
+
+### Configuration File
+
+To avoid repeating flags, you can create an `.arch-viz.json` file in your project root. CLI arguments will always override the config file values.
+
+```json
+{
+  "ignore": ["tests", "stories", "__mocks__"],
+  "editor": "cursor",
+  "watch": false
+}
 ```
 
 ## How It Works
