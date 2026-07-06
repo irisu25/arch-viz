@@ -8,11 +8,42 @@ import { detectCircularDependencies, detectOrphanFiles } from './utils/analyzer'
 import { startWatchServer } from './utils/server';
 import { openInBrowser } from './utils/open';
 
+const args = process.argv.slice(2);
+
+if (args.includes('--version') || args.includes('-v')) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { version } = require('../package.json') as { version: string };
+  console.log(`arch-viz v${version}`);
+  process.exit(0);
+}
+
+if (args.includes('--help') || args.includes('-h')) {
+  console.log(`
+  Usage: arch-viz [directory] [options]
+
+  Options:
+    --ignore=<folders>  Comma-separated list of folders to ignore
+                        e.g. --ignore=tests,stories
+    --watch, -w         Watch mode — auto-rebuilds graph on file changes
+    --editor=<editor>   Force a specific editor for double-click to open
+                        Supported: vscode, cursor, webstorm, idea, subl
+    --version, -v       Show version number
+    --help, -h          Show this help message
+
+  Examples:
+    npx @irisu25/arch-viz
+    npx @irisu25/arch-viz ./src
+    npx @irisu25/arch-viz ./src --ignore=tests,components
+    npx @irisu25/arch-viz ./src --watch --editor=cursor
+  `);
+  process.exit(0);
+}
+
 let targetDir = '.';
 let customIgnores: string[] = [];
 let isWatchMode = false;
 
-for (const arg of process.argv.slice(2)) {
+for (const arg of args) {
   if (arg.startsWith('--ignore=')) {
     customIgnores = arg.substring(9).split(',').map(s => s.trim());
   } else if (arg === '--watch' || arg === '-w') {
